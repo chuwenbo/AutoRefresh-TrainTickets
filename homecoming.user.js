@@ -1,4 +1,4 @@
-// ==UserScript==
+ï»¿// ==UserScript==
 // @name         12306
 // @version      1.0.0
 // @author       tall_tree@foxmail.com
@@ -6,10 +6,10 @@
 // @description  12306
 // @include      *://dynamic.12306.cn/otsweb/*
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js
-// ==UserScript==
+// ==/UserScript==
 
 function withjQuery(callback, safe) {
-    //ÊÇ·ñÒÑ¾­¼ÓÔØjquery
+    //æ˜¯å¦å·²ç»åŠ è½½jquery
     if (typeof (jQuery) == "undefined") {
         var script = document.createElement("script");
         script.src = "https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
@@ -33,7 +33,7 @@ function withjQuery(callback, safe) {
         }
         document.head.appendChild(script);
     }
-    else {//ÒÑ¾­¼ÓÔØjQuery
+    else {//å·²ç»åŠ è½½jQuery
         setTimeout(function () {
             callback(jQuery, typeof unsafeWindow == "undefined" ? window : unsafeWindow);
         }, 30);
@@ -51,7 +51,7 @@ withjQuery(function ($, window) {
         if (window.webkitNotifications && window.webkitNotifications.checkPermission() == 0) {
             var notification = webkitNotifications.createNotification(
                 "http://www.12306.cn/mormhweb/images/favicon.cio", //iocn url
-                "¶©Æ±", //notification title
+                "è®¢ç¥¨", //notification title
                 str
             );
             notification.show();
@@ -74,65 +74,162 @@ withjQuery(function ($, window) {
     }
 
     function query() {
-        var isStudentTicket = false; //ÊÇ·ñÑ§ÉúÆ±
-        var isAutoQueryEnabled = false; //ÊÇ·ñ¿ªÊ¼Ë¢Æ±
-        var isTicketAvailable = false; //Æ±ÊÇ·ñÓĞĞ§
-        var audio = null; //ÓĞÆ±Ê±£¬ÒôÀÖÌáĞÑ 
-        var queryTimes = 0; //counter ²éÑ¯´ÎÊı
+        var isStudentTicket = false; //æ˜¯å¦å­¦ç”Ÿç¥¨
+        var isAutoQueryEnabled = false; //æ˜¯å¦å¼€å§‹åˆ·ç¥¨
+        var isTicketAvailable = false; //ç¥¨æ˜¯å¦æœ‰æ•ˆ
+        var audio = null; //æœ‰ç¥¨æ—¶ï¼ŒéŸ³ä¹æé†’ 
+        var queryTimes = 0; //counter æŸ¥è¯¢æ¬¡æ•° 
+        var firstRemove = false;
 
-        //ÏŞ¶¨³µ´Î
+        //é™å®šè½¦æ¬¡
         var $special = $("<input type='text' />")
-        var $specialOnly = $("<label style='margin-left:10px;color: blue;'><input type='checkbox'  id='__chkspecialOnly'/>½öÏÔÊ¾ÏŞ¶¨³µ´Î<label>");
-        var $includeCanOder = $("<label style='margin-right:10px;color: blue;'><input type='checkbox' id='__chkIncludeCanOder'/>ÏÔÊ¾¿ÉÔ¤¶¨³µ´Î<label>");
+        var $specialOnly = $("<label style='margin-left:10px;color: blue;'><input type='checkbox'  id='__chkspecialOnly'/>ä»…æ˜¾ç¤ºé™å®šè½¦æ¬¡<label>");
+        var $includeCanOder = $("<label style='margin-right:10px;color: blue;'><input type='checkbox' id='__chkIncludeCanOder'/>æ˜¾ç¤ºå¯é¢„å®šè½¦æ¬¡<label>");
 
         //Control panel UI
-        var ui = $("<div>ÇëÏÈÑ¡ÔñºÃ³ö·¢µØ£¬Ä¿µÄµØ£¬ºÍ³ö·¢Ê±¼ä¡£&nbsp;&nbsp;&nbsp;</div>")
+        var ui = $("<div style='background-color:#CCFF99'>").append("<div>")
             .append(
-                $("<input id='isStudentTicket' type='checkbox' />").change(function () {
-                    isStudentTicket = this.checked;
-                })
-            ).append(
-                $("<label for='isStudentTicket'>Ñ§ÉúÆ±</label>")
+            $("<label>è¯·å…ˆé€‰æ‹©å¥½å‡ºå‘åœ°ï¼Œç›®çš„åœ°ï¼Œå’Œå‡ºå‘æ—¶é—´ã€‚&nbsp;&nbsp;&nbsp;</label>")
+        //          )
+        //            .append(
+        //                $("<input id='isStudentTicket' type='checkbox' />").change(function () {
+        //                   isStudentTicket = this.checked;
+        //              })
+        //            ).append(
+        //                $("<label for='isStudentTicket'></label>").html("å­¦ç”Ÿç¥¨&nbsp;&nbsp;")
             ).append(
                 $("<button id='refreshButton' style='padding: 5px 10px; background: #2CC03E;border-color: #259A33;border-right-color: #2CC03E;border-bottom-color:#2CC03E;color: white;border-radius: 5px;text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.2);'/>")
-                    .html("¿ªÊ¼Ë¢Æ±").click(function () {
-                        if (!isAutoQueryEnabled) {//¿ªÊ¼Ë¢Æ± 
-                            if (audio && !audio.paused) audio.pause(); //Í£Ö¹ÒôÀÖ
+                    .html("å¼€å§‹åˆ·ç¥¨").click(function () {
+                        if (!isAutoQueryEnabled) {//å¼€å§‹åˆ·ç¥¨ 
+                            if (audio && !audio.paused) audio.pause(); //åœæ­¢éŸ³ä¹
                             isTicketAvailable = false;
                             isAutoQueryEnabled = true;
                             doQuery();
-                            this.innnerHTML = "Í£Ö¹Ë¢Æ±";
+                            this.innnerHTML = "åœæ­¢åˆ·ç¥¨";
                         }
                         else {
                             isAutoQueryEnabled = false;
-                            this.innerHTML = "¿ªÊ¼Ë¢Æ±";
+                            this.innerHTML = "å¼€å§‹åˆ·ç¥¨";
                         }
                     })
             ).append(
-                $("<span>").html("&nbsp;&nbsp;³¢ÊÔ´ÎÊı£º").append(
+                $("<span>").html("&nbsp;&nbsp;å°è¯•æ¬¡æ•°ï¼š").append(
                     $("<span/>").attr("id", "refreshTimes").text("0")
                 )
-            ).append(
-                $("<div>ÏŞ¶¨´¥·¢³µ´Î£º</div>").append($special)
+            ).append("</div>")
+            .append(
+                $("<div>é™å®šè§¦å‘è½¦æ¬¡ï¼š</div>").append($special)
                     .append($specialOnly).append($includeCanOder)
-                    .append("²»ÏŞÖÆ²»ÌîĞ´£¬ÏŞ¶¨¶à´ÎÓÃ¿Õ¸ñ·Ö¸î,ÀıÈç: G32 G34")
-            );
+                    .append("ä¸é™åˆ¶ä¸å¡«å†™ï¼Œé™å®šå¤šæ¬¡ç”¨ç©ºæ ¼åˆ†å‰²,ä¾‹å¦‚: G32 G34")
+            ).append("</div>");
 
-        //×¢Èëhtml
-        var container = $("..cx_title_w:first");
+        //æ³¨å…¥html
+        var container = $(".cx_title_w:first");
+        //console.log(container);
         container.length ? ui.insertBefore(container) : ui.appendTo(document.body);
 
+        //ticket type selector UI
+        var ticketType = new Array();
+        var checkbox_list = new Array();
+        $(".hdr tr:eq(2) td").each(function (i, e) {
+            ticketType.push(false);
+            if (i < 3) return;
+            ticketType[i] = true;
 
+            //é€‰æ‹©è®¢ç¥¨ç±»å‹çš„checkbox
+            var c = $("<input />").attr("type", "checkBox").attr("checked", true);
+            c[0].ticketTypeId = i;
+            console.log(c);
+            c.change(function () {
+                ticketType[this.ticketTypeId] = this.checked;
+            }).appendTo(e);
+            checkbox_list.push(c);
+        });
 
-        //ÏÔÊ¾²éÑ¯´ÎÊı
+        $.each([1, 2], function () {
+            var c = checkbox_list.pop();
+            c[0] = false;
+            ticketType[c[0].tticketTypeId] = this.checked;
+        });
+
+        //cssè®¾ç½®
+        //$(".xhdr").parent().height(300);
+        $(".objbox").css("top", "-138px"); //é™åˆ¶æŸ¥è¯¢ç»“æœæ˜¾ç¤ºåŒºåŸŸï¼Œå¦åˆ™æ·»åŠ ç¥¨ç±»å‹checkboxæ˜¾ç¤ºä¸å…¨
+        $("#gridbox").height(300); //è®¾ç½®æŸ¥è¯¢æ˜¾ç¤ºåŒºåŸŸé«˜åº¦ï¼Œé˜²æ­¢å¤–å±‚å‡ºç°æ»šåŠ¨æ¡
+
+        delete checkbox_list;
+
+        //æ˜¾ç¤ºæŸ¥è¯¢æ¬¡æ•°
         var displayQueryTimes = function (n) {
             document.getElementById("refreshTimes").innerHTML = n;
         };
-        //Trigger the button Ö´ĞĞ²éÑ¯
+        //Trigger the button æ‰§è¡ŒæŸ¥è¯¢
         var doQuery = function () {
+            firstRemove = true;
             displayQueryTimes(queryTimes++);
             document.getElementById(isStudentTicket ? "stu_submitQuery" : "submitQuery").click();
         };
 
+        function getTimeLimitValues() {
+            return $.map([$('#startTimeHFrom').val(), $('#startTimeMFrom').val(), $('#startTimeHTo').val(), $('#startTimeMTo').val()],
+                function (val) { return parseInt(val) || 0; });
+        }
+
+        var checkTickets = function (row, time_limit, row_index) {
+            return false;
+        };
+
+        var highLightRow = function (row) {
+            $(row).css("background-color", "D1E1F1");
+        }
+
+        var onTicketAvailable = function () {
+            if (window.Audio) {
+                if (!audio) {
+                    audio = new Audio("http://infinitinb.net/COFFdD0xMzU5MjU5MTg0Jmk9MTE4LjE4Ni44LjU0JnU9U29uZ3MvdjEvZmFpbnRRQy9mYi9kMzM0ZGYxNTA2M2YyYmZmNjNmMDcxNjgzYjY4OGNmYi5tcDMmbT1kOWExOGNlMDkyYWUyOWEwMTc0MmUwOTI0M2Q0NWM3YyZ2PWxpc3RlbiZuPb2txM9zdHlsZSZzPVBTWSUyMCZwPXM=.mp3");
+                    audio.loop = true;
+                }
+                audio.play();
+                notify("å¯ä»¥è®¢ç¥¨äº†ï¼", null, true);
+            } else {
+                notify("å¯ä»¥è®¢ç¥¨äº†ï¼");
+            }
+        }
+
+        //è½®è¯¢æ‰§è¡Œ
+        window.$ && window.$(".obj:first").ajaxComplete(function () {
+            var _timeLimit = getTimeLimitValues();
+            $(this).find("tr").each(function (n, e) {
+                //isTicketAvailable = true;
+                if (checkTickets(e, _timeLimit, n)) {
+                    isTicketAvailable = true;
+                    highLightRow(e);
+                }
+            });
+            if (firstRemove) {
+                firstRemove = false;
+                if (isTicketAvailable) {
+                    if (isAutoQueryEnabled) {
+                        document.getElementById("refreshButton").click();
+                    }
+                    onTicketAvailable();
+                }
+            }
+        }).ajaxError(function () {
+            if (isAutoQueryEnabled) doQuery();
+        });
+
+
+        var _delayButton = window.delayButton;
+        window.delayButton = function () {
+            _delayButton();
+            if (isAutoQueryEnabled) doQuery();
+        }
+
     }
+
+    route("querySingleAction.do", query);
+    route("myOrderAction.do?method=resign", query);
+    route("confirmPassengerResignAction.do?method=cancelOrderToQuery", query);
+
 }, true);
